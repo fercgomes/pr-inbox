@@ -1,69 +1,122 @@
-import Image from "next/image";
+import { getServerSession } from "next-auth";
+import { SignInButton, SignOutButton } from "@/components/auth-buttons";
+import { DiffButton } from "@/components/diff-button";
+import { authOptions } from "@/lib/auth";
+import { getInbox, repositoryName, type PullRequest } from "@/lib/github";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+const sections = [
+  ["Awaiting your review", "No one has reviewed these yet.", "awaitingReview", "bg-amber-50 text-amber-900"],
+  ["Returned to you", "Changes were requested.", "returnedToYou", "bg-rose-50 text-rose-900"],
+  ["Awaiting approval", "Your pull requests need a review.", "awaitingApproval", "bg-sky-50 text-sky-900"],
+  ["Drafts", "Your open draft pull requests.", "drafts", "bg-violet-50 text-violet-900"],
+  ["Merged", "Your recently merged pull requests.", "merged", "bg-emerald-50 text-emerald-900"],
+] as const;
+
+function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
+  if (pullRequests.length === 0) {
+    return <p className="px-5 py-5 text-sm text-zinc-500">None.</p>;
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+    <ul className="divide-y divide-zinc-100 px-5">
+      {pullRequests.map((pullRequest) => (
+        <li key={pullRequest.id} className="flex items-center justify-between gap-4 py-4">
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            className="min-w-0 hover:text-zinc-600"
+            href={pullRequest.html_url}
+            rel="noreferrer"
             target="_blank"
-            rel="noopener noreferrer"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
+            <p className="font-medium text-zinc-900">{pullRequest.title}</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              {repositoryName(pullRequest.repository_url)} #{pullRequest.number} · {pullRequest.user.login}
+            </p>
           </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          <DiffButton
+            number={pullRequest.number}
+            repository={repositoryName(pullRequest.repository_url)}
+            title={pullRequest.title}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.accessToken) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6">
+        <p className="text-sm font-medium text-zinc-500">PR Inbox</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-zinc-950">
+          Your pull requests, in one place.
+        </h1>
+        <p className="mt-4 text-zinc-600">
+          Sign in to view GitHub pull requests that need your attention.
+        </p>
+        <div className="mt-8">
+          <SignInButton />
         </div>
       </main>
-    </div>
+    );
+  }
+
+  let inbox: Awaited<ReturnType<typeof getInbox>> | null = null;
+  let errorMessage: string | null = null;
+
+  try {
+    inbox = await getInbox(session.accessToken);
+  } catch (error) {
+    errorMessage = error instanceof Error ? error.message : "GitHub data could not load.";
+  }
+
+  if (errorMessage || !inbox) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6">
+        <p className="text-sm font-medium text-zinc-500">PR Inbox</p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950">
+          GitHub data could not load.
+        </h1>
+        <p className="mt-3 text-zinc-600">{errorMessage}</p>
+        <div className="mt-8">
+          <SignOutButton />
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto w-full max-w-4xl px-6 py-12">
+      <header className="flex items-center justify-between border-b border-zinc-200 pb-6">
+        <div>
+          <p className="text-sm font-medium text-zinc-500">PR Inbox</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">
+            {session.user?.name ?? "Your pull requests"}
+          </h1>
+        </div>
+        <SignOutButton />
+      </header>
+
+      <div className="mt-8 space-y-6">
+        {sections.map(([title, description, key, tone]) => (
+          <details key={key} open className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <summary className={`flex cursor-pointer list-none items-center justify-between px-5 py-4 ${tone}`}>
+              <div>
+                <h2 className="text-lg font-semibold">{title}</h2>
+                <p className="mt-1 text-sm opacity-70">{description}</p>
+              </div>
+              <span className="flex size-10 items-center justify-center rounded-full bg-white/70 text-lg font-semibold">
+                {inbox[key].length}
+              </span>
+            </summary>
+            <PullRequestList pullRequests={inbox[key]} />
+          </details>
+        ))}
+      </div>
+    </main>
   );
 }
