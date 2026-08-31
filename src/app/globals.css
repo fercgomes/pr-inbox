@@ -5,6 +5,24 @@
   --foreground: #18181b;
 }
 
+html {
+  scrollbar-color: var(--foreground) var(--background);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--foreground);
+  border: 2px solid var(--background);
+}
+
 body {
   min-height: 100vh;
   background: var(--background);

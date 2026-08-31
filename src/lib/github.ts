@@ -3,9 +3,10 @@ export type PullRequest = {
   number: number;
   title: string;
   html_url: string;
+  created_at: string;
   updated_at: string;
   repository_url: string;
-  user: { login: string };
+  user: { login: string; avatar_url: string };
 };
 
 export type Inbox = {
@@ -45,7 +46,7 @@ async function search(query: string, token: string) {
   });
 
   const result = await github<SearchResponse>(`/search/issues?${params}`, token);
-  return result.items;
+  return result.items.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 }
 
 export async function getInbox(token: string): Promise<Inbox> {
