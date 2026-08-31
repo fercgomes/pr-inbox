@@ -9,12 +9,12 @@ import { getInbox, repositoryName, type PullRequest } from "@/lib/github";
 export const dynamic = "force-dynamic";
 
 const sections = [
-  ["01", "Awaiting your review", "awaitingReview", "bg-[#d8ff48]"],
-  ["02", "Approved", "approved", "bg-[#ffd166]"],
+  ["01", "Awaiting your review", "awaitingReview", "bg-[#ffd166]"],
+  ["02", "Approved", "approved", "bg-[#7ee2ba]"],
   ["03", "Returned to you", "returnedToYou", "bg-[#ff8c69]"],
   ["04", "Awaiting approval", "awaitingApproval", "bg-[#8ac8ff]"],
-  ["05", "Drafts", "drafts", "bg-[#d5b6ff]"],
-  ["06", "Merged", "merged", "bg-[#7ee2ba]"],
+  ["05", "Drafts", "drafts", "bg-[#d4d4d8]"],
+  ["06", "Merged", "merged", "bg-[#d5b6ff]"],
 ] as const;
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "always" });
