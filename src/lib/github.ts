@@ -54,7 +54,7 @@ export async function getInbox(token: string): Promise<Inbox> {
 
   const [awaitingReview, returnedToYou, awaitingApproval, drafts, merged] =
     await Promise.all([
-      search(`is:open is:pr review-requested:${user.login} review:none`, token),
+      search(`is:open is:pr review-requested:${user.login} review:none -draft:true`, token),
       search(`is:open is:pr ${author} review:changes_requested`, token),
       search(`is:open is:pr ${author} review:required`, token),
       search(`is:open is:pr ${author} draft:true`, token),

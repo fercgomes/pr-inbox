@@ -1,46 +1,48 @@
 import { getServerSession } from "next-auth";
 import { SignInButton, SignOutButton } from "@/components/auth-buttons";
+import { CollapsibleSection } from "@/components/collapsible-section";
 import { DiffButton } from "@/components/diff-button";
+import { PostHogIdentify } from "@/components/posthog-identify";
 import { authOptions } from "@/lib/auth";
 import { getInbox, repositoryName, type PullRequest } from "@/lib/github";
 
 export const dynamic = "force-dynamic";
 
 const sections = [
-  ["Awaiting your review", "No one has reviewed these yet.", "awaitingReview", "bg-amber-50 text-amber-900"],
-  ["Returned to you", "Changes were requested.", "returnedToYou", "bg-rose-50 text-rose-900"],
-  ["Awaiting approval", "Your pull requests need a review.", "awaitingApproval", "bg-sky-50 text-sky-900"],
-  ["Drafts", "Your open draft pull requests.", "drafts", "bg-violet-50 text-violet-900"],
-  ["Merged", "Your recently merged pull requests.", "merged", "bg-emerald-50 text-emerald-900"],
+  ["01", "Awaiting your review", "No reviews yet.", "awaitingReview", "bg-[#d8ff48]"],
+  ["02", "Returned to you", "Changes requested.", "returnedToYou", "bg-[#ff8c69]"],
+  ["03", "Awaiting approval", "Your work needs a review.", "awaitingApproval", "bg-[#8ac8ff]"],
+  ["04", "Drafts", "Open drafts.", "drafts", "bg-[#d5b6ff]"],
+  ["05", "Merged", "Recently merged.", "merged", "bg-[#7ee2ba]"],
 ] as const;
 
 function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
   if (pullRequests.length === 0) {
-    return <p className="px-5 py-5 text-sm text-zinc-500">None.</p>;
+    return <p className="border-t-2 border-zinc-950 bg-white px-5 py-6 font-mono text-xs text-zinc-500">Nothing here.</p>;
   }
 
   return (
-    <ul className="divide-y divide-zinc-100 px-5">
-      {pullRequests.map((pullRequest) => (
-        <li key={pullRequest.id} className="flex items-center justify-between gap-4 py-4">
-          <a
-            className="min-w-0 hover:text-zinc-600"
-            href={pullRequest.html_url}
-            rel="noreferrer"
-            target="_blank"
-          >
-            <p className="font-medium text-zinc-900">{pullRequest.title}</p>
-            <p className="mt-1 text-sm text-zinc-500">
-              {repositoryName(pullRequest.repository_url)} #{pullRequest.number} · {pullRequest.user.login}
-            </p>
-          </a>
-          <DiffButton
-            number={pullRequest.number}
-            repository={repositoryName(pullRequest.repository_url)}
-            title={pullRequest.title}
-          />
-        </li>
-      ))}
+    <ul className="border-t-2 border-zinc-950 bg-white">
+      {pullRequests.map((pullRequest) => {
+        const repository = repositoryName(pullRequest.repository_url);
+
+        return (
+          <li key={pullRequest.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-4 border-b border-zinc-200 px-5 py-4 last:border-b-0">
+            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center bg-zinc-950 font-mono text-xs font-bold text-[#f4f2eb]">
+              #{pullRequest.number}
+            </span>
+            <a className="min-w-0" href={pullRequest.html_url} rel="noreferrer" target="_blank">
+              <p className="truncate font-semibold text-zinc-950 hover:underline">{pullRequest.title}</p>
+              <p className="mt-1 truncate font-mono text-xs text-zinc-500">
+                {repository} / {pullRequest.user.login}
+              </p>
+            </a>
+            <div className="self-center">
+              <DiffButton number={pullRequest.number} repository={repository} title={pullRequest.title} />
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -50,16 +52,14 @@ export default async function Home() {
 
   if (!session?.accessToken) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6">
-        <p className="text-sm font-medium text-zinc-500">PR Inbox</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-zinc-950">
-          Your pull requests, in one place.
-        </h1>
-        <p className="mt-4 text-zinc-600">
-          Sign in to view GitHub pull requests that need your attention.
-        </p>
-        <div className="mt-8">
-          <SignInButton />
+      <main className="grid min-h-screen place-items-center bg-[#f4f2eb] p-6 text-zinc-950">
+        <div className="w-full max-w-xl border-2 border-zinc-950 bg-[#d8ff48] p-8 sm:p-12">
+          <p className="font-mono text-sm font-bold">PR / INBOX</p>
+          <h1 className="mt-10 text-5xl font-semibold tracking-[-0.06em] sm:text-7xl">Review your code.</h1>
+          <p className="mt-6 max-w-sm text-lg leading-7">Sign in to read your GitHub pull request queue.</p>
+          <div className="mt-10">
+            <SignInButton />
+          </div>
         </div>
       </main>
     );
@@ -76,46 +76,63 @@ export default async function Home() {
 
   if (errorMessage || !inbox) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6">
-        <p className="text-sm font-medium text-zinc-500">PR Inbox</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950">
-          GitHub data could not load.
-        </h1>
-        <p className="mt-3 text-zinc-600">{errorMessage}</p>
-        <div className="mt-8">
-          <SignOutButton />
+      <main className="grid min-h-screen place-items-center bg-[#f4f2eb] p-6 text-zinc-950">
+        <div className="w-full max-w-xl border-2 border-zinc-950 bg-[#ff8c69] p-8 sm:p-12">
+          <p className="font-mono text-sm font-bold">PR / INBOX</p>
+          <h1 className="mt-10 text-4xl font-semibold tracking-[-0.04em]">GitHub data could not load.</h1>
+          <p className="mt-4 max-w-md leading-6">{errorMessage}</p>
+          <div className="mt-10">
+            <SignOutButton />
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-6 py-12">
-      <header className="flex items-center justify-between border-b border-zinc-200 pb-6">
+    <main className="min-h-screen bg-[#f4f2eb] text-zinc-950 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
+      <PostHogIdentify email={session.user?.email} name={session.user?.name} />
+      <aside className="flex flex-col justify-between bg-zinc-950 p-6 text-[#f4f2eb] lg:sticky lg:top-0 lg:h-screen lg:self-start">
         <div>
-          <p className="text-sm font-medium text-zinc-500">PR Inbox</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">
-            {session.user?.name ?? "Your pull requests"}
-          </h1>
+          <p className="font-mono text-xs tracking-[0.2em] text-zinc-400">PULL REQUESTS</p>
+          <p className="mt-4 text-6xl font-semibold tracking-[-0.08em]">PR</p>
+          <p className="text-3xl font-semibold tracking-[-0.06em]">Inbox</p>
         </div>
-        <SignOutButton />
-      </header>
+        <div className="mt-16 border-t border-zinc-700 pt-5 lg:mt-0">
+          <p className="font-mono text-xs text-zinc-500">SIGNED IN AS</p>
+          <p className="mt-2 truncate font-medium">{session.user?.name ?? "GitHub user"}</p>
+          <div className="mt-5">
+            <SignOutButton />
+          </div>
+        </div>
+      </aside>
 
-      <div className="mt-8 space-y-6">
-        {sections.map(([title, description, key, tone]) => (
-          <details key={key} open className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-            <summary className={`flex cursor-pointer list-none items-center justify-between px-5 py-4 ${tone}`}>
-              <div>
-                <h2 className="text-lg font-semibold">{title}</h2>
-                <p className="mt-1 text-sm opacity-70">{description}</p>
-              </div>
-              <span className="flex size-10 items-center justify-center rounded-full bg-white/70 text-lg font-semibold">
-                {inbox[key].length}
-              </span>
-            </summary>
-            <PullRequestList pullRequests={inbox[key]} />
-          </details>
-        ))}
+      <div className="p-4 sm:p-8 lg:p-12">
+        <header className="flex items-end justify-between border-b-2 border-zinc-950 pb-5">
+          <div>
+            <p className="font-mono text-xs font-bold tracking-[0.16em]">YOUR QUEUE</p>
+            <h1 className="mt-2 text-4xl font-semibold tracking-[-0.06em] sm:text-6xl">Pull requests</h1>
+          </div>
+          <p className="hidden max-w-36 text-right font-mono text-xs leading-5 text-zinc-500 sm:block">
+            GitHub review states, grouped for triage.
+          </p>
+        </header>
+
+        <div className="mt-8 space-y-4">
+          {sections.map(([index, title, description, key, color]) => (
+            <CollapsibleSection
+              key={key}
+              color={color}
+              count={inbox[key].length}
+              defaultOpen={key !== "drafts" && key !== "merged"}
+              description={description}
+              index={index}
+              title={title}
+            >
+              <PullRequestList pullRequests={inbox[key]} />
+            </CollapsibleSection>
+          ))}
+        </div>
       </div>
     </main>
   );
