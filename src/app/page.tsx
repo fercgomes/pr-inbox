@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
 
 const sections = [
   ["01", "Awaiting your review", "awaitingReview", "bg-[#d8ff48]"],
-  ["02", "Returned to you", "returnedToYou", "bg-[#ff8c69]"],
-  ["03", "Awaiting approval", "awaitingApproval", "bg-[#8ac8ff]"],
-  ["04", "Approved", "approved", "bg-[#ffd166]"],
+  ["02", "Approved", "approved", "bg-[#ffd166]"],
+  ["03", "Returned to you", "returnedToYou", "bg-[#ff8c69]"],
+  ["04", "Awaiting approval", "awaitingApproval", "bg-[#8ac8ff]"],
   ["05", "Drafts", "drafts", "bg-[#d5b6ff]"],
   ["06", "Merged", "merged", "bg-[#7ee2ba]"],
 ] as const;
