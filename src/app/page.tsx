@@ -2,7 +2,6 @@ import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { SignInButton, SignOutButton } from "@/components/auth-buttons";
 import { CollapsibleSection } from "@/components/collapsible-section";
-import { DiffButton } from "@/components/diff-button";
 import { PostHogIdentify } from "@/components/posthog-identify";
 import { authOptions } from "@/lib/auth";
 import { getInbox, repositoryName, type PullRequest } from "@/lib/github";
@@ -68,8 +67,12 @@ function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
                 </span>
               </p>
             </a>
-            <div className="self-center">
-              <DiffButton number={pullRequest.number} repository={repository} title={pullRequest.title} />
+            <div
+              aria-label={`${pullRequest.additions} additions and ${pullRequest.deletions} removals`}
+              className="flex items-center gap-2 self-center border border-zinc-200 px-2.5 py-1.5 font-mono text-xs font-bold"
+            >
+              <span className="text-emerald-700">+{pullRequest.additions}</span>
+              <span className="text-red-600">-{pullRequest.deletions}</span>
             </div>
           </li>
         );

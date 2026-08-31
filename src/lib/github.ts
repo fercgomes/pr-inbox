@@ -1,10 +1,12 @@
 export type PullRequest = {
-  id: number;
+  id: string;
   number: number;
   title: string;
   html_url: string;
   created_at: string;
   updated_at: string;
+  additions: number;
+  deletions: number;
   repository_url: string;
   user: { login: string; avatar_url: string };
 };
@@ -18,7 +20,37 @@ export type Inbox = {
 };
 
 type GithubUser = { login: string };
-type SearchResponse = { items: PullRequest[] };
+type GraphqlPullRequest = Omit<PullRequest, "repository_url"> & {
+  repository: { nameWithOwner: string };
+};
+type GraphqlResponse<T> = { data?: T };
+type SearchResponse = { search: { nodes: GraphqlPullRequest[] } };
+
+const searchPullRequestsQuery = `
+  query SearchPullRequests($query: String!) {
+    search(query: $query, type: ISSUE, first: 100) {
+      nodes {
+        ... on PullRequest {
+          id
+          number
+          title
+          html_url: url
+          created_at: createdAt
+          updated_at: updatedAt
+          additions
+          deletions
+          repository {
+            nameWithOwner
+          }
+          user: author {
+            login
+            avatar_url: avatarUrl
+          }
+        }
+      }
+    }
+  }
+`;
 
 async function github<T>(path: string, token: string): Promise<T> {
   const response = await fetch(`https://api.github.com${path}`, {
@@ -37,16 +69,36 @@ async function github<T>(path: string, token: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function search(query: string, token: string) {
-  const params = new URLSearchParams({
-    q: query,
-    per_page: "100",
-    sort: "updated",
-    order: "desc",
+async function graphql<T>(query: string, variables: Record<string, string>, token: string): Promise<T> {
+  const response = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify({ query, variables }),
+    cache: "no-store",
   });
+  const result = (await response.json()) as GraphqlResponse<T>;
 
-  const result = await github<SearchResponse>(`/search/issues?${params}`, token);
-  return result.items.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  if (!response.ok || !result.data) {
+    throw new Error(`GitHub API request failed (${response.status}).`);
+  }
+
+  return result.data;
+}
+
+async function search(query: string, token: string) {
+  const result = await graphql<SearchResponse>(searchPullRequestsQuery, { query: `${query} sort:updated-desc` }, token);
+
+  return result.search.nodes
+    .map(({ repository, ...pullRequest }) => ({
+      ...pullRequest,
+      repository_url: `https://api.github.com/repos/${repository.nameWithOwner}`,
+    }))
+    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 }
 
 export async function getInbox(token: string): Promise<Inbox> {
