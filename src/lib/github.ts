@@ -15,6 +15,7 @@ export type Inbox = {
   awaitingReview: PullRequest[];
   returnedToYou: PullRequest[];
   awaitingApproval: PullRequest[];
+  approved: PullRequest[];
   drafts: PullRequest[];
   merged: PullRequest[];
 };
@@ -105,16 +106,17 @@ export async function getInbox(token: string): Promise<Inbox> {
   const user = await github<GithubUser>("/user", token);
   const author = `author:${user.login}`;
 
-  const [awaitingReview, returnedToYou, awaitingApproval, drafts, merged] =
+  const [awaitingReview, returnedToYou, awaitingApproval, approved, drafts, merged] =
     await Promise.all([
       search(`is:open is:pr review-requested:${user.login} review:none -draft:true`, token),
       search(`is:open is:pr ${author} review:changes_requested`, token),
       search(`is:open is:pr ${author} review:required`, token),
+      search(`is:open is:pr ${author} review:approved -draft:true`, token),
       search(`is:open is:pr ${author} draft:true`, token),
       search(`is:merged is:pr ${author}`, token),
     ]);
 
-  return { awaitingReview, returnedToYou, awaitingApproval, drafts, merged };
+  return { awaitingReview, returnedToYou, awaitingApproval, approved, drafts, merged };
 }
 
 export function repositoryName(url: string) {
