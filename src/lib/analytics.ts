@@ -1,3 +1,4 @@
+import * as amplitude from "@amplitude/unified";
 import mixpanel from "mixpanel-browser";
 import posthog from "posthog-js";
 
@@ -10,6 +11,7 @@ type AnalyticsClient = {
 };
 
 const clients: AnalyticsClient[] = [];
+let initialized = false;
 
 function run(operation: (client: AnalyticsClient) => void) {
   clients.forEach((client) => {
@@ -23,8 +25,33 @@ function run(operation: (client: AnalyticsClient) => void) {
 
 export const analytics = {
   init() {
+    if (initialized) {
+      return;
+    }
+
+    initialized = true;
+
+    const amplitudeKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY;
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
+
+    if (!amplitudeKey) {
+      console.warn("Amplitude API key missing — analytics disabled");
+    } else {
+      void amplitude.initAll(amplitudeKey, { analytics: { autocapture: true }, sessionReplay: { sampleRate: 1 } });
+      clients.push({
+        capture: (event, properties) => amplitude.track(event, { ...properties, prompt_version: "BA400.4" }),
+        identify: (userId, properties) => {
+          amplitude.setUserId(userId);
+          if (properties) {
+            const identify = new amplitude.Identify();
+            Object.entries(properties).forEach(([key, value]) => identify.set(key, value));
+            amplitude.identify(identify);
+          }
+        },
+        reset: () => amplitude.reset(),
+      });
+    }
 
     if (posthogKey) {
       posthog.init(posthogKey, {

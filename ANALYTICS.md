@@ -4,6 +4,7 @@
 
 The application uses direct browser SDKs through `src/lib/analytics.ts`.
 
+- Amplitude uses `NEXT_PUBLIC_AMPLITUDE_API_KEY`.
 - PostHog uses `NEXT_PUBLIC_POSTHOG_KEY`.
 - Mixpanel uses `NEXT_PUBLIC_MIXPANEL_TOKEN`.
 - Mixpanel starts when `NEXT_PUBLIC_MIXPANEL_TOKEN` is set.
@@ -11,7 +12,7 @@ The application uses direct browser SDKs through `src/lib/analytics.ts`.
 
 ## Identity
 
-The application identifies signed-in users with the stable GitHub provider account ID. It does not use email as an analytics identifier. It resets each provider before sign-out.
+The application identifies signed-in users with the stable GitHub provider account ID. It does not use email as an analytics identifier. It resets each provider before sign-out. Amplitude events include `prompt_version: BA400.4`.
 
 ## Events
 
