@@ -33,6 +33,22 @@ function timeSince(timestamp: string) {
   return relativeTimeFormatter.format(-Math.floor(seconds / secondsPerUnit), unit);
 }
 
+function checkIndicator(checks: PullRequest["checks"]) {
+  if (checks.failed > 0) {
+    return "text-red-600";
+  }
+
+  if (checks.running > 0) {
+    return "text-amber-600";
+  }
+
+  if (checks.successful > 0) {
+    return "text-emerald-700";
+  }
+
+  return "text-zinc-400";
+}
+
 function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
   if (pullRequests.length === 0) {
     return <p className="border-t-2 border-zinc-950 bg-white px-5 py-6 font-mono text-xs text-zinc-500">Nothing here.</p>;
@@ -42,6 +58,7 @@ function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
     <ul className="border-t-2 border-zinc-950 bg-white">
       {pullRequests.map((pullRequest) => {
         const repository = repositoryName(pullRequest.repository_url);
+        const checkColor = checkIndicator(pullRequest.checks);
 
         return (
           <li key={pullRequest.id} className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-4 border-b border-zinc-200 px-5 py-4 last:border-b-0">
@@ -68,12 +85,34 @@ function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
                 </span>
               </p>
             </a>
-            <div
-              aria-label={`${pullRequest.additions} additions and ${pullRequest.deletions} removals`}
-              className="flex items-center gap-2 self-center border border-zinc-200 px-2.5 py-1.5 font-mono text-xs font-bold"
-            >
-              <span className="text-emerald-700">+{pullRequest.additions}</span>
-              <span className="text-red-600">-{pullRequest.deletions}</span>
+            <div className="flex flex-col items-end gap-2 self-center font-mono text-xs font-bold">
+              <span
+                aria-label={`${pullRequest.checks.total} checks: ${pullRequest.checks.running} running, ${pullRequest.checks.failed} failed, ${pullRequest.checks.successful} successful`}
+                className={`flex items-center gap-1.5 bg-zinc-950 px-2 py-1 text-[#f4f2eb] ${checkColor}`}
+              >
+                <span className="text-zinc-500">CI</span>
+                {pullRequest.checks.total === 0 ? (
+                  "–"
+                ) : (
+                  <>
+                    <span className="text-emerald-300">✓{pullRequest.checks.successful}</span>
+                    <span className="text-amber-300">•{pullRequest.checks.running}</span>
+                    <span className="text-rose-300">×{pullRequest.checks.failed}</span>
+                  </>
+                )}
+              </span>
+              <div className="flex items-center gap-2 text-right">
+                <span aria-label={`${pullRequest.comments} comments`} className="flex items-center gap-1 text-zinc-500">
+                  <svg aria-hidden="true" className="size-3" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M20 15a4 4 0 0 1-4 4H8l-4 3v-7a4 4 0 0 1-2-3.5V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" />
+                  </svg>
+                  {pullRequest.comments}
+                </span>
+                <span aria-label={`${pullRequest.additions} additions and ${pullRequest.deletions} removals`}>
+                  <span className="text-emerald-700">+{pullRequest.additions}</span>{" "}
+                  <span className="text-red-600">-{pullRequest.deletions}</span>
+                </span>
+              </div>
             </div>
           </li>
         );
