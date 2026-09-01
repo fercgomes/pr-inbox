@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import posthog from "posthog-js";
+import { analytics } from "@/lib/analytics";
 
 type CollapsibleSectionProps = {
   index: string;
@@ -25,7 +25,7 @@ export function CollapsibleSection({
       open={defaultOpen}
       className="group border-2 border-zinc-950"
       onToggle={(event) => {
-        posthog.capture("pr_inbox_section_toggled", {
+        analytics.capture("section_toggled", {
           section: title,
           is_open: event.currentTarget.open,
         });

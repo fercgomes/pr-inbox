@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn, signOut } from "next-auth/react";
-import posthog from "posthog-js";
+import { analytics } from "@/lib/analytics";
 
 export function SignInButton() {
   return (
@@ -19,7 +19,7 @@ export function SignOutButton() {
     <button
       className="border border-current px-3 py-1.5 text-sm font-medium hover:bg-[#f4f2eb] hover:text-zinc-950"
       onClick={() => {
-        posthog.reset();
+        analytics.reset();
         signOut();
       }}
     >

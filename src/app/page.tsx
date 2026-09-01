@@ -2,7 +2,8 @@ import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { SignInButton, SignOutButton } from "@/components/auth-buttons";
 import { CollapsibleSection } from "@/components/collapsible-section";
-import { PostHogIdentify } from "@/components/posthog-identify";
+import { PullRequestLink } from "@/components/pull-request-link";
+import { AnalyticsIdentify, AnalyticsInboxViewed } from "@/components/analytics-identify";
 import { authOptions } from "@/lib/auth";
 import { getInbox, repositoryName, type PullRequest } from "@/lib/github";
 
@@ -49,7 +50,7 @@ function checkIndicator(checks: PullRequest["checks"]) {
   return "text-zinc-400";
 }
 
-function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
+function PullRequestList({ pullRequests, state }: { pullRequests: PullRequest[]; state: (typeof sections)[number][2] }) {
   if (pullRequests.length === 0) {
     return <p className="border-t-2 border-zinc-950 bg-white px-5 py-6 font-mono text-xs text-zinc-500">Nothing here.</p>;
   }
@@ -72,7 +73,7 @@ function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
               src={pullRequest.user.avatar_url}
               width={32}
             />
-            <a className="min-w-0" href={pullRequest.html_url} rel="noreferrer" target="_blank">
+            <PullRequestLink href={pullRequest.html_url} pullRequestState={state} repository={repository}>
               <p className="truncate font-semibold text-zinc-950 hover:underline">{pullRequest.title}</p>
               <p className="mt-1 truncate font-mono text-xs text-zinc-500">
                 {repository} / {pullRequest.user.login}
@@ -84,7 +85,7 @@ function PullRequestList({ pullRequests }: { pullRequests: PullRequest[] }) {
                   <time dateTime={pullRequest.created_at}>Created {timeSince(pullRequest.created_at)}</time>
                 </span>
               </p>
-            </a>
+            </PullRequestLink>
             <div className="flex flex-col items-end gap-2 self-center font-mono text-xs font-bold">
               <span
                 aria-label={`${pullRequest.checks.total} checks: ${pullRequest.checks.running} running, ${pullRequest.checks.failed} failed, ${pullRequest.checks.successful} successful`}
@@ -166,7 +167,18 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[#f4f2eb] text-zinc-950 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <PostHogIdentify email={session.user?.email} name={session.user?.name} />
+      <AnalyticsIdentify name={session.user?.name} userId={session.user?.id} />
+      <AnalyticsInboxViewed
+        pullRequestCount={inbox.awaitingReview.length + inbox.approved.length + inbox.awaitingApproval.length + inbox.drafts.length + inbox.merged.length + inbox.returnedToYou.length}
+        sectionCounts={{
+          awaiting_review_count: inbox.awaitingReview.length,
+          approved_count: inbox.approved.length,
+          awaiting_approval_count: inbox.awaitingApproval.length,
+          drafts_count: inbox.drafts.length,
+          merged_count: inbox.merged.length,
+          returned_to_you_count: inbox.returnedToYou.length,
+        }}
+      />
       <aside className="flex flex-col justify-between bg-zinc-950 p-6 text-[#f4f2eb] lg:sticky lg:top-0 lg:h-screen lg:self-start">
         <div>
           <p className="font-mono text-xs tracking-[0.2em] text-zinc-400">dead simple pull request inbox</p>
@@ -192,7 +204,7 @@ export default async function Home() {
               index={index}
               title={title}
             >
-              <PullRequestList pullRequests={inbox[key]} />
+              <PullRequestList pullRequests={inbox[key]} state={key} />
             </CollapsibleSection>
           ))}
         </div>
