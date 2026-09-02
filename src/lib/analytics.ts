@@ -1,4 +1,5 @@
 import * as amplitude from "@amplitude/unified";
+import { injectContentsquareScript } from "@contentsquare/tag-sdk";
 import { createClient, type LDContext } from "@launchdarkly/react-sdk";
 import { LogLevel, StatsigClient } from "@statsig/react-bindings";
 import { StatsigSessionReplayPlugin } from "@statsig/session-replay";
@@ -47,6 +48,8 @@ export const analytics = {
     initialized = true;
 
     const amplitudeKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY;
+
+    injectContentsquareScript({ clientId: "c15bb69ebd017" });
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const launchDarklyKey = process.env.NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID;
     const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;

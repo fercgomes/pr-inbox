@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@amplitude/unified": "^1.1.32",
+    "@contentsquare/tag-sdk": "^1.1.0",
     "@launchdarkly/react-sdk": "^4.1.14",
     "@statsig/react-bindings": "^3.33.5",
     "@statsig/session-replay": "^3.33.5",
