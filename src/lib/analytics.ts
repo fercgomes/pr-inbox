@@ -1,4 +1,5 @@
 import * as amplitude from "@amplitude/unified";
+import { createClient, type LDContext } from "@launchdarkly/react-sdk";
 import { LogLevel, StatsigClient } from "@statsig/react-bindings";
 import { StatsigSessionReplayPlugin } from "@statsig/session-replay";
 import { StatsigAutoCapturePlugin } from "@statsig/web-analytics";
@@ -15,6 +16,17 @@ type AnalyticsClient = {
 
 const clients: AnalyticsClient[] = [];
 let initialized = false;
+
+function anonymousLaunchDarklyContext(): LDContext {
+  const storedKey = localStorage.getItem("launchdarkly_anonymous_key");
+  const key = storedKey ?? crypto.randomUUID();
+
+  if (!storedKey) {
+    localStorage.setItem("launchdarkly_anonymous_key", key);
+  }
+
+  return { kind: "user", key, anonymous: true };
+}
 
 function run(operation: (client: AnalyticsClient) => void) {
   clients.forEach((client) => {
@@ -36,6 +48,7 @@ export const analytics = {
 
     const amplitudeKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY;
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const launchDarklyKey = process.env.NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID;
     const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
     const statsigKey = process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY;
 
@@ -54,6 +67,16 @@ export const analytics = {
           }
         },
         reset: () => amplitude.reset(),
+      });
+    }
+
+    if (launchDarklyKey) {
+      const launchDarkly = createClient(launchDarklyKey, anonymousLaunchDarklyContext());
+      void launchDarkly.start();
+      clients.push({
+        capture: (event, properties) => launchDarkly.track(event, properties),
+        identify: (userId) => void launchDarkly.identify({ kind: "user", key: userId }),
+        reset: () => void launchDarkly.identify(anonymousLaunchDarklyContext()),
       });
     }
 

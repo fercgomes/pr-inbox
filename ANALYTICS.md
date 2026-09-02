@@ -7,6 +7,7 @@ The application uses direct browser SDKs through `src/lib/analytics.ts`.
 - Amplitude uses `NEXT_PUBLIC_AMPLITUDE_API_KEY`.
 - PostHog uses `NEXT_PUBLIC_POSTHOG_KEY`.
 - Statsig uses `NEXT_PUBLIC_STATSIG_CLIENT_KEY`.
+- LaunchDarkly uses `NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID`.
 - Mixpanel uses `NEXT_PUBLIC_MIXPANEL_TOKEN`.
 - Mixpanel starts when `NEXT_PUBLIC_MIXPANEL_TOKEN` is set.
 - Simplified ID Merge is assumed to be enabled for the configured project.
