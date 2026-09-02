@@ -58,15 +58,15 @@ export const analytics = {
     }
 
     if (statsigKey) {
-      const statsig = new StatsigClient(statsigKey, { userID: "a-user" }, {
+      const statsig = new StatsigClient(statsigKey, {}, {
         logLevel: LogLevel.Debug,
         plugins: [new StatsigSessionReplayPlugin(), new StatsigAutoCapturePlugin()],
       });
       void statsig.initializeAsync();
       clients.push({
         capture: (event, properties) => statsig.logEvent(event, undefined, Object.fromEntries(Object.entries(properties ?? {}).map(([key, value]) => [key, String(value)]))),
-        identify: (userId, properties) => void statsig.updateUserAsync({ userID: userId, custom: properties }),
-        reset: () => void statsig.updateUserAsync({ userID: "a-user" }),
+        identify: (userId, properties) => statsig.updateUserSync({ userID: userId, custom: properties }),
+        reset: () => statsig.updateUserSync({}),
       });
     }
 
