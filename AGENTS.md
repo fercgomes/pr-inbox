@@ -12,11 +12,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Use `src/lib/analytics.ts` for browser analytics. It sends identical `init`, `identify`, `capture`, and `reset` calls to configured providers.
 
-The active providers are Amplitude, PostHog, and Mixpanel. Do not import provider SDKs outside this wrapper.
+The active providers are Amplitude, PostHog, Mixpanel, and Statsig. Do not import provider SDKs outside this wrapper.
 
 Amplitude uses `NEXT_PUBLIC_AMPLITUDE_API_KEY`. It initializes browser analytics, autocapture, and session replay in `analytics.init()`.
 
 Mixpanel uses `NEXT_PUBLIC_MIXPANEL_TOKEN`. Simplified ID Merge is assumed to be enabled in the configured project.
+
+Statsig uses `NEXT_PUBLIC_STATSIG_CLIENT_KEY`. It initializes session replay and web analytics in `analytics.init()`.
 
 Identify users with the stable GitHub provider account ID. Do not identify with an email address. Call `analytics.reset()` before sign-out.
 

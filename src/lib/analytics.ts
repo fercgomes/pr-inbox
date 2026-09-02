@@ -1,4 +1,7 @@
 import * as amplitude from "@amplitude/unified";
+import { LogLevel, StatsigClient } from "@statsig/react-bindings";
+import { StatsigSessionReplayPlugin } from "@statsig/session-replay";
+import { StatsigAutoCapturePlugin } from "@statsig/web-analytics";
 import mixpanel from "mixpanel-browser";
 import posthog from "posthog-js";
 
@@ -34,6 +37,7 @@ export const analytics = {
     const amplitudeKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY;
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
+    const statsigKey = process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY;
 
     if (!amplitudeKey) {
       console.warn("Amplitude API key missing — analytics disabled");
@@ -50,6 +54,19 @@ export const analytics = {
           }
         },
         reset: () => amplitude.reset(),
+      });
+    }
+
+    if (statsigKey) {
+      const statsig = new StatsigClient(statsigKey, { userID: "a-user" }, {
+        logLevel: LogLevel.Debug,
+        plugins: [new StatsigSessionReplayPlugin(), new StatsigAutoCapturePlugin()],
+      });
+      void statsig.initializeAsync();
+      clients.push({
+        capture: (event, properties) => statsig.logEvent(event, undefined, Object.fromEntries(Object.entries(properties ?? {}).map(([key, value]) => [key, String(value)]))),
+        identify: (userId, properties) => void statsig.updateUserAsync({ userID: userId, custom: properties }),
+        reset: () => void statsig.updateUserAsync({ userID: "a-user" }),
       });
     }
 
