@@ -12,7 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Use `src/lib/analytics.ts` for browser analytics. It sends identical `init`, `identify`, `capture`, and `reset` calls to configured providers.
 
-The active providers are Amplitude, Contentsquare, FullStory, PostHog, Mixpanel, Statsig, and LaunchDarkly. Do not import provider SDKs outside this wrapper.
+The active providers are Amplitude, Contentsquare, FullStory, Plausible, PostHog, Mixpanel, Statsig, and LaunchDarkly. Do not import provider SDKs outside this wrapper.
 
 Amplitude uses `NEXT_PUBLIC_AMPLITUDE_API_KEY`. It initializes browser analytics, autocapture, and session replay in `analytics.init()`.
 
@@ -25,6 +25,8 @@ LaunchDarkly uses `NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID`. It initializes with a pe
 Contentsquare uses tag ID `c15bb69ebd017`. It initializes in `analytics.init()`.
 
 FullStory uses organization ID `o-254697-na1`. It initializes in `analytics.init()`.
+
+Plausible loads `https://plausible.io/js/pa-lDCJwGiP_btFc-YfnlcLA.js` in `analytics.init()`.
 
 Identify users with the stable GitHub provider account ID. Do not identify with an email address. Call `analytics.reset()` before sign-out.
 

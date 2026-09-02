@@ -24,9 +24,16 @@ type FullStory = {
   identify: (userId: string, properties?: AnalyticsProperties) => void;
 };
 
+type Plausible = {
+  (event: string, options?: { props?: AnalyticsProperties }): void;
+  init: () => void;
+  q?: [string, { props?: AnalyticsProperties }?][];
+};
+
 declare global {
   interface Window {
     FS?: FullStory;
+    plausible?: Plausible;
   }
 }
 
@@ -40,6 +47,24 @@ function initializeFullStory(): FullStory {
   document.head.append(script);
 
   return window.FS!;
+}
+
+function initializePlausible(): Plausible {
+  const plausible = window.plausible ?? ((event: string, options?: { props?: AnalyticsProperties }) => {
+    plausible.q?.push([event, options]);
+  }) as Plausible;
+
+  plausible.q ??= [];
+  plausible.init ??= () => undefined;
+  plausible.init();
+  window.plausible = plausible;
+
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = "https://plausible.io/js/pa-lDCJwGiP_btFc-YfnlcLA.js";
+  document.head.append(script);
+
+  return plausible;
 }
 
 function anonymousLaunchDarklyContext(): LDContext {
@@ -73,12 +98,18 @@ export const analytics = {
 
     const amplitudeKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY;
     const fullStory = initializeFullStory();
+    const plausible = initializePlausible();
 
     injectContentsquareScript({ clientId: "c15bb69ebd017" });
     clients.push({
       capture: (event, properties) => fullStory.event(event, properties),
       identify: (userId, properties) => fullStory.identify(userId, properties),
       reset: () => fullStory.anonymize(),
+    });
+    clients.push({
+      capture: (event, properties) => plausible(event, { props: properties }),
+      identify: () => undefined,
+      reset: () => undefined,
     });
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const launchDarklyKey = process.env.NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID;

@@ -10,6 +10,7 @@ The application uses direct browser SDKs through `src/lib/analytics.ts`.
 - LaunchDarkly uses `NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID`.
 - Contentsquare uses tag ID `c15bb69ebd017`.
 - FullStory uses organization ID `o-254697-na1`.
+- Plausible loads `https://plausible.io/js/pa-lDCJwGiP_btFc-YfnlcLA.js`.
 - Mixpanel uses `NEXT_PUBLIC_MIXPANEL_TOKEN`.
 - Mixpanel starts when `NEXT_PUBLIC_MIXPANEL_TOKEN` is set.
 - Simplified ID Merge is assumed to be enabled for the configured project.
