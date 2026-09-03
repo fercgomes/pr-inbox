@@ -4,6 +4,8 @@ import { createClient, type LDContext } from "@launchdarkly/react-sdk";
 import { LogLevel, StatsigClient } from "@statsig/react-bindings";
 import { StatsigSessionReplayPlugin } from "@statsig/session-replay";
 import { StatsigAutoCapturePlugin } from "@statsig/web-analytics";
+import LogRocket from "logrocket";
+import setupLogRocketReact from "logrocket-react";
 import mixpanel from "mixpanel-browser";
 import posthog from "posthog-js";
 
@@ -11,6 +13,7 @@ type AnalyticsProperties = Record<string, boolean | number | string>;
 
 type AnalyticsClient = {
   capture: (event: string, properties?: AnalyticsProperties) => void;
+  captureMessage?: (message: string, properties?: AnalyticsProperties) => void;
   identify: (userId: string, properties?: AnalyticsProperties) => void;
   reset: () => void;
 };
@@ -98,6 +101,9 @@ export const analytics = {
 
     const amplitudeKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY;
     const fullStory = initializeFullStory();
+
+    LogRocket.init("0eflgn/prinboxdev", { release: "0.1.0" });
+    setupLogRocketReact();
     const plausible = initializePlausible();
 
     injectContentsquareScript({ clientId: "c15bb69ebd017" });
@@ -105,6 +111,12 @@ export const analytics = {
       capture: (event, properties) => fullStory.event(event, properties),
       identify: (userId, properties) => fullStory.identify(userId, properties),
       reset: () => fullStory.anonymize(),
+    });
+    clients.push({
+      capture: (event, properties) => LogRocket.track(event, properties),
+      captureMessage: (message, properties) => LogRocket.captureMessage(message, { extra: properties }),
+      identify: (userId, properties) => LogRocket.identify(userId, properties),
+      reset: () => LogRocket.startNewSession(),
     });
     clients.push({
       capture: (event, properties) => plausible(event, { props: properties }),
@@ -187,6 +199,9 @@ export const analytics = {
   },
   capture(event: string, properties?: AnalyticsProperties) {
     run((client) => client.capture(event, properties));
+  },
+  captureMessage(message: string, properties?: AnalyticsProperties) {
+    run((client) => client.captureMessage?.(message, properties));
   },
   identify(userId: string, properties?: AnalyticsProperties) {
     run((client) => client.identify(userId, properties));

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { SignInButton, SignOutButton } from "@/components/auth-buttons";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { PullRequestLink } from "@/components/pull-request-link";
+import { AnalyticsError } from "@/components/analytics-error";
 import { AnalyticsIdentify, AnalyticsInboxViewed } from "@/components/analytics-identify";
 import { authOptions } from "@/lib/auth";
 import { getInbox, repositoryName, type PullRequest } from "@/lib/github";
@@ -153,6 +154,7 @@ export default async function Home() {
   if (errorMessage || !inbox) {
     return (
       <main className="grid min-h-screen place-items-center bg-[#f4f2eb] p-6 text-zinc-950">
+        <AnalyticsError message={errorMessage ?? "GitHub data could not load."} />
         <div className="w-full max-w-xl border-2 border-zinc-950 bg-[#ff8c69] p-8 sm:p-12">
           <p className="font-mono text-sm font-bold">PR / INBOX</p>
           <h1 className="mt-10 text-4xl font-semibold tracking-[-0.04em]">GitHub data could not load.</h1>

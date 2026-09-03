@@ -11,13 +11,14 @@ The application uses direct browser SDKs through `src/lib/analytics.ts`.
 - Contentsquare uses tag ID `c15bb69ebd017`.
 - FullStory uses organization ID `o-254697-na1`.
 - Plausible loads `https://plausible.io/js/pa-lDCJwGiP_btFc-YfnlcLA.js`.
+- LogRocket uses app ID `0eflgn/prinboxdev` and release `0.1.0`.
 - Mixpanel uses `NEXT_PUBLIC_MIXPANEL_TOKEN`.
 - Mixpanel starts when `NEXT_PUBLIC_MIXPANEL_TOKEN` is set.
 - Simplified ID Merge is assumed to be enabled for the configured project.
 
 ## Identity
 
-The application identifies signed-in users with the stable GitHub provider account ID. It does not use email as an analytics identifier. It resets each provider before sign-out. Amplitude events include `prompt_version: BA400.4`.
+The application identifies signed-in users with the stable GitHub provider account ID. It does not use email as an analytics identifier. It resets each provider before sign-out. Amplitude events include `prompt_version: BA400.4`. LogRocket records inbox load errors.
 
 ## Events
 
